@@ -50,15 +50,16 @@ const Announements = () => {
     const handleSubmit = async () => {
         let imagesUrl = [];
         try {
-            await Promise.all(
-                formData.photos_field.map(async (photo) => {
-                    const storageRef = ref(storage, `admin_annoucements/${photo.name}`);
-                    await uploadBytes(storageRef, photo);
-                    const downloadURL = await getDownloadURL(storageRef);
-                    imagesUrl.push(downloadURL);
-                })
-            );
-
+            if (formData.photos_field) {
+                await Promise.all(
+                    formData.photos_field.map(async (photo) => {
+                        const storageRef = ref(storage, `admin_annoucements/${photo.name}`);
+                        await uploadBytes(storageRef, photo);
+                        const downloadURL = await getDownloadURL(storageRef);
+                        imagesUrl.push(downloadURL);
+                    })
+                );
+            }
             const postData = {
                 title: formData.title,
                 description: formData.description,
@@ -86,8 +87,8 @@ const Announements = () => {
             </div>
 
             <div className='w-[90%] gap-4 h-[600px] bg-white flex flex-col justify-center items-center rounded-md shadow-lg'>
-                <TextField label="Enter Title Announcement" onChange={handleChange} value={formData.title} name='title' type='text' className='w-[70%]' />
-                <TextField label="Description of Announcement" onChange={handleChange} value={formData.description} name='description' type='text' className='w-[70%]' />
+                <TextField required label="Enter Title Announcement" onChange={handleChange} value={formData.title} name='title' type='text' className='w-[70%]' />
+                <TextField required label="Description of Announcement" onChange={handleChange} value={formData.description} name='description' type='text' className='w-[70%]' />
                 <div className="flex items-center justify-center w-[70%]">
                     <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-34 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-white-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">

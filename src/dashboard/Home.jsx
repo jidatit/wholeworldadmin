@@ -51,6 +51,7 @@ const Home = () => {
     const handleSubmit = async () => {
         let imagesUrl = [];
         try {
+            if (formData.photos_field) {
             await Promise.all(
                 formData.photos_field.map(async (photo) => {
                     const storageRef = ref(storage, `admin_homepage_posts/${photo.name}`);
@@ -59,6 +60,7 @@ const Home = () => {
                     imagesUrl.push(downloadURL);
                 })
             );
+            }
 
             const postData = {
                 title: formData.title,
@@ -88,7 +90,7 @@ const Home = () => {
             </div>
 
             <div className='w-[90%] gap-4 h-[600px] bg-white flex flex-col justify-center items-center rounded-md shadow-lg'>
-                <TextField label="Enter Title of Section" type='text' onChange={handleChange} value={formData.title} name='title' className='w-[70%]' />
+                <TextField required label="Enter Title of Section" type='text' onChange={handleChange} value={formData.title} name='title' className='w-[70%]' />
                 <FormControl className='w-[70%]'>
                     <InputLabel id="demo-simple-select-label">Select Category of Section</InputLabel>
                     <Select
@@ -96,13 +98,14 @@ const Home = () => {
                         id="demo-simple-select"
                         label="Select Category of Item"
                         onChange={handleChange} value={formData.category} name='category'
+                        required
                     >
                         <MenuItem value={10}>Ten</MenuItem>
                         <MenuItem value={20}>Twenty</MenuItem>
                         <MenuItem value={30}>Thirty</MenuItem>
                     </Select>
                 </FormControl>
-                <TextField label="Write Section Description here" onChange={handleChange} value={formData.description} name='description' type='text' className='w-[70%]' />
+                <TextField required label="Write Section Description here" onChange={handleChange} value={formData.description} name='description' type='text' className='w-[70%]' />
 
                 <div className="flex items-center justify-center w-[70%]">
                     <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-34 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-white-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">

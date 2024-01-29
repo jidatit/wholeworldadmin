@@ -53,6 +53,7 @@ const Blog = () => {
     const handleSubmit = async () => {
         let imagesUrl = [];
         try {
+            if (formData.photos_field) {
             await Promise.all(
                 formData.photos_field.map(async (photo) => {
                     const storageRef = ref(storage, `admin_blog_posts/${photo.name}`);
@@ -61,6 +62,7 @@ const Blog = () => {
                     imagesUrl.push(downloadURL);
                 })
             );
+            }
 
             const postData = {
                 title: formData.title,
@@ -92,7 +94,7 @@ const Blog = () => {
             </div>
 
             <div className='w-[90%] gap-4 pt-5 mb-10 bg-white flex flex-col justify-center items-center rounded-md shadow-lg'>
-                <TextField label="Enter Blog Title" type='text' onChange={handleChange} name='title' value={formData.title} className='w-[70%]' />
+                <TextField required label="Enter Blog Title" type='text' onChange={handleChange} name='title' value={formData.title} className='w-[70%]' />
                 <FormControl className='w-[70%]'>
                     <InputLabel id="demo-simple-select-label">Select Category of Blog</InputLabel>
                     <Select
@@ -100,14 +102,15 @@ const Blog = () => {
                         id="demo-simple-select"
                         label="Select Category of Item"
                         onChange={handleChange} name='category' value={formData.category}
+                        required
                     >
                         <MenuItem value={10}>Ten</MenuItem>
                         <MenuItem value={20}>Twenty</MenuItem>
                         <MenuItem value={30}>Thirty</MenuItem>
                     </Select>
                 </FormControl>
-                <TextField label="Name of Author" type='text' onChange={handleChange} name='author' value={formData.author} className='w-[70%]' />
-                <TextField label="Blog Description" type='text' onChange={handleChange} name='description' value={formData.description} className='w-[70%]' />
+                <TextField required label="Name of Author" type='text' onChange={handleChange} name='author' value={formData.author} className='w-[70%]' />
+                <TextField required label="Blog Description" type='text' onChange={handleChange} name='description' value={formData.description} className='w-[70%]' />
                 <div className="flex items-center justify-center w-[70%]">
                     <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-34 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-white-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -127,7 +130,7 @@ const Blog = () => {
                     ))}
                 </div>
 
-                <textarea onChange={handleChange} name='blogcontent' value={formData.blogcontent} className='w-[70%] border-2 rounded-lg p-2 outline-none min-h-28 max-h-60' placeholder='Write the Blog here' />
+                <textarea required onChange={handleChange} name='blogcontent' value={formData.blogcontent} className='w-[70%] border-2 rounded-lg p-2 outline-none min-h-28 max-h-60' placeholder='Write the Blog here' />
                 <div className='w-[90%] mb-5 flex flex-col justify-end items-end'>
                     <div className='md:w-[30%] w-full pr-0 md:pr-2'>
                         <Button onClickProp={handleSubmit} text="Publish" />
