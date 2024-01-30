@@ -12,7 +12,7 @@ const SocialMedia = () => {
 
     const [formData, setFormData] = useState({
         title: '',
-        category: '',
+        // category: '',
         description: '',
         imagesUrl: [],
         imagePreviews: [],
@@ -64,7 +64,7 @@ const SocialMedia = () => {
 
             const postData = {
                 title: formData.title,
-                category: formData.category,
+                // category: formData.category,
                 description: formData.description,
                 imagesUrl: imagesUrl,
             };
@@ -91,7 +91,7 @@ const SocialMedia = () => {
 
             <div className='w-[90%] gap-4 h-[600px] bg-white flex flex-col justify-center items-center rounded-md shadow-lg'>
                 <TextField required label="Enter Title of Post" onChange={handleChange} value={formData.title} name='title' type='text' className='w-[70%]' />
-                <FormControl className='w-[70%]'>
+                {/* <FormControl className='w-[70%]'>
                     <InputLabel id="demo-simple-select-label">Select Category of Post</InputLabel>
                     <Select
                         labelId="demo-simple-select-label"
@@ -104,7 +104,7 @@ const SocialMedia = () => {
                         <MenuItem value={20}>Twenty</MenuItem>
                         <MenuItem value={30}>Thirty</MenuItem>
                     </Select>
-                </FormControl>
+                </FormControl> */}
                 <TextField required label="Description of Post" type='text' onChange={handleChange} value={formData.description} name='description' className='w-[70%]' />
                 <div className="flex items-center justify-center w-[70%]">
                     <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-34 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-white-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
