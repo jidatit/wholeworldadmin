@@ -50,9 +50,10 @@ function App() {
                 </Box>
               ) : (
                 <Routes>
-                  <Route path="/" element={<AuthContextProvider><Home /></AuthContextProvider>} />
+                  {/* <Route path="/" element={<AuthContextProvider><Home /></AuthContextProvider>} /> */}
                   <Route path="/blog" element={<AuthContextProvider><Blog /></AuthContextProvider>} />
-                  <Route path="/social-media" element={<AuthContextProvider><SocialMedia /></AuthContextProvider>} />
+                  {/* <Route path="/social-media" element={<AuthContextProvider><SocialMedia /></AuthContextProvider>} /> */}
+                  <Route path="/" element={<AuthContextProvider><SocialMedia /></AuthContextProvider>} />
                   <Route path="/announcements" element={<AuthContextProvider><Announements /></AuthContextProvider>} />
                   <Route path="/logout" element={<AuthContextProvider><Logout /></AuthContextProvider>} />
                 </Routes>
