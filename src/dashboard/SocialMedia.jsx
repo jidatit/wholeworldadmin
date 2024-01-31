@@ -1,85 +1,94 @@
-import React, { useState } from 'react'
-import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
-import Button from "../components/Button"
-import { addDoc, collection } from "firebase/firestore";
+import React, { useState, useEffect } from 'react';
+import { collection, getDocs, doc, setDoc } from "firebase/firestore";
 import { db } from '../../firebase';
-import { storage } from '../../firebase';
-import { ref, uploadBytes, getDownloadURL } from '@firebase/storage';
 import { toast, ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
+import { TextField } from '@mui/material';
+import { storage } from '../../firebase';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
 
 const SocialMedia = () => {
+    const [entity, setEntity] = useState({});
+    const [thirdImageUrl, setThirdImageUrl] = useState('');
+    const [updatedVideo, setUpdatedVideo] = useState(null);
 
-    const [formData, setFormData] = useState({
-        title: '',
-        // category: '',
-        description: '',
-        imagesUrl: [],
-        imagePreviews: [],
-    });
+    useEffect(() => {
+        const getPosts = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "admin_socialmedia_posts"));
+                let data = {};
+                querySnapshot.forEach((doc) => {
+                    data = {
+                        id: doc.id,
+                        ...doc.data()
+                    };
+                });
+                setEntity(data);
+                if (data.imagesUrl && data.imagesUrl.length >= 4) {
+                    setThirdImageUrl(data.imagesUrl[3]);
+                    data.imagesUrl.splice(3, 1);
+                }
+            } catch (error) {
+                toast.error(error.message);
+            }
+        };
+        getPosts();
+    }, []);
 
-    const handleFileChange = (event) => {
-        const files = Array.from(event.target.files);
-        const imagePreviews = [];
-
-        files.forEach((file) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                imagePreviews.push(e.target.result);
-                setFormData((prevData) => ({
-                    ...prevData,
-                    imagePreviews: [...imagePreviews],
-                }));
-            };
-            reader.readAsDataURL(file);
-        });
-
-        setFormData((prevData) => ({
-            ...prevData,
-            photos_field: files,
-        }));
-    };
-
-    const handleChange = (event) => {
-        const { name, value } = event.target;
-        setFormData((prevData) => ({
-            ...prevData,
-            [name]: value,
-        }));
-    };
-
-    const handleSubmit = async () => {
-        let imagesUrl = [];
+    const handleVideoUpdate = async () => {
         try {
-            if (formData.photos_field) {
-            await Promise.all(
-                formData.photos_field.map(async (photo) => {
-                    const storageRef = ref(storage, `admin_socialmedia_posts/${photo.name}`);
-                    await uploadBytes(storageRef, photo);
-                    const downloadURL = await getDownloadURL(storageRef);
-                    imagesUrl.push(downloadURL);
-                })
-            );
+            if (!updatedVideo) {
+                toast.error("Please select a video file.");
+                return;
+            }
+            const storageFolderPath = `admin_socialmedia_posts/updated_video.mp4`;
+            const storageRef = ref(storage, storageFolderPath);
+            await uploadBytes(storageRef, updatedVideo);
+
+            const updatedVideoDownloadUrl = await getDownloadURL(storageRef);
+
+            const updatedImagesUrl = [...entity.imagesUrl];
+            updatedImagesUrl[3] = updatedVideoDownloadUrl;
+
+            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
+                imagesUrl: updatedImagesUrl,
+                title: entity.title
+            });
+
+            toast.success("Video updated successfully!");
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
+    const handleVideoDelete = async () => {
+        try {
+            const videoUrl = thirdImageUrl;
+            if (!videoUrl) {
+                toast.error("No video found to delete.");
+                return;
             }
 
-            const postData = {
-                title: formData.title,
-                // category: formData.category,
-                description: formData.description,
-                imagesUrl: imagesUrl,
-            };
+            const storageRef = ref(storage, `admin_socialmedia_posts/updated_video.mp4`);
+            await deleteObject(storageRef);
 
-            await addDoc(collection(db, 'admin_socialmedia_posts'), postData);
-            console.log("Document successfully written to Firestore.");
-            toast.success("Success !", {
-                position: "top-center"
+            const updatedImagesUrl = [...entity.imagesUrl];
+            updatedImagesUrl[3] = '';
+
+            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
+                imagesUrl: updatedImagesUrl,
+                title: entity.title
             });
+
+            toast.success("Video deleted successfully!");
         } catch (error) {
-            console.error("Error writing document to Firestore:", error);
-            toast.error("Error !", {
-                position: "top-center"
-            });
+            toast.error(error.message);
         }
+    };
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        setUpdatedVideo(file);
     };
 
     return (
@@ -89,51 +98,53 @@ const SocialMedia = () => {
                 <h1 className='text-black font-bold text-[25px] mt-5 mb-5'>Social Media Posts</h1>
             </div>
 
-            <div className='w-[90%] gap-4 h-[600px] bg-white flex flex-col justify-center items-center rounded-md shadow-lg'>
-                <TextField required label="Enter Title of Post" onChange={handleChange} value={formData.title} name='title' type='text' className='w-[70%]' />
-                {/* <FormControl className='w-[70%]'>
-                    <InputLabel id="demo-simple-select-label">Select Category of Post</InputLabel>
-                    <Select
-                        labelId="demo-simple-select-label"
-                        id="demo-simple-select"
-                        label="Select Category of Item"
-                        onChange={handleChange} value={formData.category} name='category'
-                        required
-                    >
-                        <MenuItem value={10}>Ten</MenuItem>
-                        <MenuItem value={20}>Twenty</MenuItem>
-                        <MenuItem value={30}>Thirty</MenuItem>
-                    </Select>
-                </FormControl> */}
-                <TextField required label="Description of Post" type='text' onChange={handleChange} value={formData.description} name='description' className='w-[70%]' />
-                <div className="flex items-center justify-center w-[70%]">
-                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-34 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-white-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                            </svg>
-                            <p className="mb-2 text-sm text-gray-500 text-center dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                            <p className="text-xs text-gray-500 text-center dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p>
+            <div className='w-[90%] gap-4 pt-5 pb-5 bg-white flex flex-col justify-center items-center rounded-md shadow-lg'>
+                <TextField className='md:w-[75%]' label="Enter Title" />
+                <div className='w-full flex flex-row justify-center gap-3 items-center flex-wrap'>
+
+                    {entity.imagesUrl && entity.imagesUrl?.slice(0, 3).map((imageUrl, index) => (
+                        <div key={index} className='relative rounded-md w-full sm:w-[50%] md:w-[33%] lg:w-[25%] max-h-[200px]'>
+                            <img className='w-full max-h-[200px] rounded-md' src={imageUrl} alt="" />
+                            <button onClick={() => updateImage(imageUrl)} className='absolute top-[20%] sm:top-[15%] md:top-[20%] bg-blue-500 right-[40%] sm:right-[35%] md:right-[40%] text-white font-semibold px-5 py-3 rounded-lg'>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                </svg>
+                            </button>
+                            <button onClick={() => deleteImage(imageUrl)} className='absolute top-[55%] sm:top-[70%] md:top-[55%] bg-red-500 text-white font-semibold right-[40%] sm:right-[35%] md:right-[40%] px-5 py-3 rounded-lg'>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                </svg>
+                            </button>
                         </div>
-                        <input id="dropzone-file" type="file" onChange={handleFileChange} value={formData.imagesUrl} name='imagesUrl' multiple className="hidden" />
-                    </label>
-                </div>
-
-                <div className='w-full flex flex-row justify-center items-center'>
-                    {formData.imagePreviews.length > 0 && formData.imagePreviews.map((preview, index) => (
-                        <img key={index} src={preview} alt={`Thumbnail ${index}`} className="w-10 h-10 m-2 object-cover rounded-lg" />
                     ))}
+
                 </div>
 
-                <div className='w-[90%] mb-5 flex flex-col justify-end items-end'>
-                    <div className='md:w-[30%] w-full pr-0 md:pr-2'>
-                        <Button onClickProp={handleSubmit} text="Publish" />
-                    </div>
+                {thirdImageUrl ? (
+                    <video className="w-full md:w-[75%] h-[200px]" controls>
+                        <source src={thirdImageUrl} type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                ) : (
+                    <>
+                        <p className='text-center font-bold'>No Video Uploaded.</p>
+                    </>
+                )}
+
+                <div className="w-full flex flex-row justify-center gap-3 items-center">
+                    <input
+                        accept="video/*"
+                        id="video-file-upload"
+                        type="file"
+                        onChange={handleFileChange}
+                    />
+                    <button variant="contained" onClick={handleVideoUpdate}>Update Video</button>
+                    <button variant="contained" onClick={handleVideoDelete}>Delete Video</button>
                 </div>
+
             </div>
-
         </div>
-    )
-}
+    );
+};
 
-export default SocialMedia
+export default SocialMedia;
