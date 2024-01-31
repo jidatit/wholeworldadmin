@@ -93,13 +93,14 @@ const SocialMedia = () => {
         }
     }
 
-    const deleteImage = async (index,imageUrl) => {
+    const deleteImage = async (index, imageUrl) => {
         try {
-
+          
         } catch (error) {
-            toast.error(error.message)
+            toast.error(error.message);
         }
-    }
+    };
+    
 
     return (
         <div className='w-full flex flex-col bg-[#FAFAFA] justify-center items-center'>
@@ -113,7 +114,7 @@ const SocialMedia = () => {
                 <div className='w-full flex flex-row justify-center gap-3 items-center flex-wrap'>
 
                     {entity.imagesUrl && entity.imagesUrl?.map((imageUrl, index) => (
-                        <div key={index} className='relative rounded-md w-full sm:w-[50%] md:w-[33%] lg:w-[25%] max-h-[200px]'>
+                        <div key={index} className='relative min-h-[200px] bg-gray-300 rounded-md w-full sm:w-[50%] md:w-[33%] lg:w-[25%] max-h-[200px]'>
                             <img className='w-full max-h-[200px] rounded-md' src={imageUrl} alt="" />
                             <button onClick={() => updateImage(index, imageUrl)} className='absolute top-[20%] sm:top-[15%] md:top-[20%] bg-blue-500 right-[40%] sm:right-[35%] md:right-[40%] text-white font-semibold px-5 py-3 rounded-lg'>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
