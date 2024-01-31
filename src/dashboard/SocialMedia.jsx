@@ -11,6 +11,7 @@ const SocialMedia = () => {
     const [entity, setEntity] = useState({});
     const [updatedVideo, setUpdatedVideo] = useState(null);
     const [updatedImage, setUpdatedImage] = useState(null);
+    const [updatedTitle, setUpdatedTitle] = useState("");
 
     useEffect(() => {
         const getPosts = async () => {
@@ -137,6 +138,24 @@ const SocialMedia = () => {
         setUpdatedImage(file);
     };
 
+    const handleTitleChange = (event) => {
+        setUpdatedTitle(event.target.value);
+    };
+
+    const handleTitleUpdate = async () => {
+        try {
+            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
+                imagesUrl: entity.imagesUrl,
+                title: updatedTitle,
+                videoUrl: entity.videoUrl
+            });
+            toast.success("Title updated successfully!");
+            setEntity({ ...entity, title: updatedTitle });
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
     return (
         <div className='w-full flex flex-col bg-[#FAFAFA] justify-center items-center'>
             <ToastContainer />
@@ -146,8 +165,18 @@ const SocialMedia = () => {
 
             <div className='w-[90%] gap-4 pt-5 pb-5 bg-white flex flex-col justify-center items-center rounded-md shadow-lg'>
                 <div className='w-[80%] flex flex-row justify-center items-center gap-3'>
-                    <TextField value={entity.title ? entity.title : ""} onChange={(e) => entity.title} className='md:w-[75%]' label="Enter Title" />
-                    <button className='px-3 py-3 bg-blue-600 rounded-lg text-white'>Update</button>
+                    <TextField
+                        value={updatedTitle !== "" ? updatedTitle : entity.title}
+                        onChange={handleTitleChange}
+                        className='md:w-[75%]'
+                        label="Enter Title"
+                    />
+                    <button
+                        className='px-3 py-3 bg-blue-600 rounded-lg text-white'
+                        onClick={handleTitleUpdate}
+                    >
+                        Update
+                    </button>
                 </div>
                 <div className='w-full mb-[20px] flex flex-row justify-center gap-3 items-center flex-wrap'>
 
