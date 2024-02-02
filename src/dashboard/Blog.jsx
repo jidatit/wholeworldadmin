@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
+import { TextField, FormControl, InputLabel, Select, MenuItem, Chip, IconButton } from '@mui/material'
 import Button from "../components/Button"
 import { addDoc, collection } from "firebase/firestore";
 import { db } from '../../firebase';
@@ -17,7 +17,8 @@ const Blog = () => {
         description: '',
         imagesUrl: [],
         imagePreviews: [],
-        dynamicContent: [{ heading: '', paragraph: '' }]
+        dynamicContent: [{ heading: '', paragraph: '' }],
+        keywords: [],
     });
 
     const handleFileChange = (event) => {
@@ -66,6 +67,22 @@ const Blog = () => {
         }));
     };
 
+    const handleKeywordsChange = (event) => {
+        // Split the entered keywords by comma and trim any extra whitespace
+        const keywords = event.target.value.split(',').map((keyword) => keyword.trim());
+        setFormData((prevData) => ({
+            ...prevData,
+            keywords: keywords,
+        }));
+    };
+
+    const handleClearKeywords = () => {
+        setFormData((prevData) => ({
+            ...prevData,
+            keywords: [],
+        }));
+    };
+
     const handleSubmit = async () => {
         let imagesUrl = [];
         try {
@@ -87,6 +104,7 @@ const Blog = () => {
                 description: formData.description,
                 imagesUrl: imagesUrl,
                 dynamicContent: formData.dynamicContent,
+                keywords: formData.keywords,
             };
 
             await addDoc(collection(db, 'admin_blog_posts'), postData);
@@ -125,12 +143,29 @@ const Blog = () => {
                         <MenuItem value={30}>Thirty</MenuItem>
                     </Select>
                 </FormControl>
+                
+                <div className='w-[70%] flex flex-col md:flex-row justify-center items-center gap-1'>
+                <TextField
+                    label="Keywords"
+                    type="text"
+                    onChange={handleKeywordsChange}
+                    name="keywords"
+                    value={formData.keywords.join(', ')}
+                    className='w-[95%]'
+                />
+                <IconButton className='w-[25%] md:w-[5%]' onClick={handleClearKeywords} size="medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                </IconButton>
+                </div>
+
                 <TextField required label="Name of Author" type='text' onChange={handleChange} name='author' value={formData.author} className='w-[70%]' />
                 <TextField required label="Blog Description" type='text' onChange={handleChange} name='description' value={formData.description} className='w-[70%]' />
 
                 {/* Dynamic content */}
                 {formData.dynamicContent.map((content, index) => (
-                   <>
+                    <>
                         <TextField
                             label={`Heading ${index + 1}`}
                             value={content.heading}
@@ -145,12 +180,12 @@ const Blog = () => {
                             rows={4}
                             className="w-[70%] mb-5"
                         />
-                   </>
+                    </>
                 ))}
 
                 {/* Plus button to add new dynamic content */}
                 <div className='w-[10%]'>
-                <Button onClickProp={handleAddContent} text="+" />
+                    <Button onClickProp={handleAddContent} text="+" />
                 </div>
 
                 <div className="flex items-center justify-center w-[70%]">
