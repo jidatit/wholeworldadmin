@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 import { TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 import Button from "../components/Button"
 import { addDoc, collection } from "firebase/firestore";
@@ -15,9 +15,9 @@ const Blog = () => {
         category: '',
         author: '',
         description: '',
-        blogcontent: '',
         imagesUrl: [],
         imagePreviews: [],
+        dynamicContent: [{ heading: '', paragraph: '' }]
     });
 
     const handleFileChange = (event) => {
@@ -50,27 +50,43 @@ const Blog = () => {
         }));
     };
 
+    const handleAddContent = () => {
+        setFormData(prevData => ({
+            ...prevData,
+            dynamicContent: [...prevData.dynamicContent, { heading: '', paragraph: '' }]
+        }));
+    };
+
+    const handleDynamicContentChange = (index, type, value) => {
+        const updatedContent = [...formData.dynamicContent];
+        updatedContent[index][type] = value;
+        setFormData(prevData => ({
+            ...prevData,
+            dynamicContent: updatedContent
+        }));
+    };
+
     const handleSubmit = async () => {
         let imagesUrl = [];
         try {
             if (formData.photos_field) {
-            await Promise.all(
-                formData.photos_field.map(async (photo) => {
-                    const storageRef = ref(storage, `admin_blog_posts/${photo.name}`);
-                    await uploadBytes(storageRef, photo);
-                    const downloadURL = await getDownloadURL(storageRef);
-                    imagesUrl.push(downloadURL);
-                })
-            );
+                await Promise.all(
+                    formData.photos_field.map(async (photo) => {
+                        const storageRef = ref(storage, `admin_blog_posts/${photo.name}`);
+                        await uploadBytes(storageRef, photo);
+                        const downloadURL = await getDownloadURL(storageRef);
+                        imagesUrl.push(downloadURL);
+                    })
+                );
             }
 
             const postData = {
                 title: formData.title,
                 category: formData.category,
                 author: formData.author,
-                blogcontent: formData.blogcontent,
                 description: formData.description,
                 imagesUrl: imagesUrl,
+                dynamicContent: formData.dynamicContent,
             };
 
             await addDoc(collection(db, 'admin_blog_posts'), postData);
@@ -88,7 +104,7 @@ const Blog = () => {
 
     return (
         <div className='w-full flex flex-col bg-[#FAFAFA] justify-center items-center'>
-<ToastContainer />
+            <ToastContainer />
             <div className='w-[90%] flex flex-col justify-center items-start'>
                 <h1 className='text-black font-bold text-[25px] mt-5 mb-5'>Blogs</h1>
             </div>
@@ -111,6 +127,32 @@ const Blog = () => {
                 </FormControl>
                 <TextField required label="Name of Author" type='text' onChange={handleChange} name='author' value={formData.author} className='w-[70%]' />
                 <TextField required label="Blog Description" type='text' onChange={handleChange} name='description' value={formData.description} className='w-[70%]' />
+
+                {/* Dynamic content */}
+                {formData.dynamicContent.map((content, index) => (
+                   <>
+                        <TextField
+                            label={`Heading ${index + 1}`}
+                            value={content.heading}
+                            onChange={(e) => handleDynamicContentChange(index, 'heading', e.target.value)}
+                            className="w-[70%] mt-2 mb-5"
+                        />
+                        <TextField
+                            label={`Paragraph ${index + 1}`}
+                            value={content.paragraph}
+                            onChange={(e) => handleDynamicContentChange(index, 'paragraph', e.target.value)}
+                            multiline
+                            rows={4}
+                            className="w-[70%] mb-5"
+                        />
+                   </>
+                ))}
+
+                {/* Plus button to add new dynamic content */}
+                <div className='w-[10%]'>
+                <Button onClickProp={handleAddContent} text="+" />
+                </div>
+
                 <div className="flex items-center justify-center w-[70%]">
                     <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-34 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-white-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -125,17 +167,17 @@ const Blog = () => {
                 </div>
 
                 <div className='w-full flex flex-row justify-center items-center'>
-                {formData.imagePreviews.length > 0 && formData.imagePreviews.map((preview, index) => (
+                    {formData.imagePreviews.length > 0 && formData.imagePreviews.map((preview, index) => (
                         <img key={index} src={preview} alt={`Thumbnail ${index}`} className="w-10 h-10 m-2 object-cover rounded-lg" />
                     ))}
                 </div>
 
-                <textarea required onChange={handleChange} name='blogcontent' value={formData.blogcontent} className='w-[70%] border-2 rounded-lg p-2 outline-none min-h-28 max-h-60' placeholder='Write the Blog here' />
                 <div className='w-[90%] mb-5 flex flex-col justify-end items-end'>
                     <div className='md:w-[30%] w-full pr-0 md:pr-2'>
                         <Button onClickProp={handleSubmit} text="Publish" />
                     </div>
                 </div>
+
             </div>
         </div>
     )
