@@ -8,10 +8,9 @@ import { SiBlogger } from "react-icons/si";
 const SideNav = () => {
 
   const menus = [
-    // { name: "Home Page", link: "/", icon: FiUsers },
+    { name: "Home Page", link: "/", icon: FiUsers },
     { name: "Blog", link: "/blog", icon: SiBlogger },
-    { name: "Social Media Posts", link: "/", icon: FiShare2 },
-    // { name: "Social Media Posts", link: "/social-media", icon: FiShare2 },
+    { name: "Social Media Posts", link: "/social-media", icon: FiShare2 },
     { name: "Announcements", link: "/announcements", icon: HiSpeakerphone },
     { name: "Logout", link: "/logout", icon: FiLogOut },
   ];
