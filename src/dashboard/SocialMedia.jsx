@@ -5,12 +5,19 @@ import { toast, ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import { TextField } from '@mui/material';
 import { storage } from '../../firebase';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from '@firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from '@firebase/storage';
 
 const SocialMedia = () => {
     const [entity, setEntity] = useState({});
+    const [updatedMainVideo, setUpdatedMainVideo] = useState(null);
     const [updatedVideo, setUpdatedVideo] = useState(null);
     const [updatedTitle, setUpdatedTitle] = useState("");
+    const [videoOne, setVideoOne] = useState({});
+    const [videoTwo, setVideoTwo] = useState({});
+    const [videoThree, setVideoThree] = useState({});
+    const [updatedVideoOnePageUrl, setUpdatedVideoOnePageUrl] = useState("");
+    const [updatedVideoTwoPageUrl, setUpdatedVideoTwoPageUrl] = useState("");
+    const [updatedVideoThreePageUrl, setUpdatedVideoThreePageUrl] = useState("");
 
     useEffect(() => {
         const getPosts = async () => {
@@ -24,6 +31,12 @@ const SocialMedia = () => {
                     };
                 });
                 setEntity(data);
+                setVideoOne(data.videoOne)
+                setVideoTwo(data.videoTwo)
+                setVideoThree(data.videoThree)
+                setUpdatedVideoOnePageUrl(data.videoOne.pageUrl)
+                setUpdatedVideoTwoPageUrl(data.videoTwo.pageUrl)
+                setUpdatedVideoThreePageUrl(data.videoThree.pageUrl)
             } catch (error) {
                 toast.error(error.message);
             }
@@ -31,51 +44,50 @@ const SocialMedia = () => {
         getPosts();
     }, []);
 
-    const handleVideoUpdate = async () => {
+    const handleVideoUpdate = async (videoToUpdate, updatedVideoFile) => {
         try {
-            if (!updatedVideo) {
+            if (!updatedVideoFile) {
                 toast.error("Please select a video file.");
                 return;
             }
-            const storageFolderPath = `admin_socialmedia_posts/updated_video.mp4`;
+            const storageFolderPath = `admin_socialmedia_posts/${videoToUpdate}.mp4`;
             const storageRef = ref(storage, storageFolderPath);
-            await uploadBytes(storageRef, updatedVideo);
+            await uploadBytes(storageRef, updatedVideoFile);
 
             const updatedVideoDownloadUrl = await getDownloadURL(storageRef);
 
-            const updatedImagesUrl = [...entity.imagesUrl];
-
             await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
-                imagesUrl: updatedImagesUrl,
-                title: entity.title,
-                videoUrl: updatedVideoDownloadUrl
+                ...entity,
+                [videoToUpdate]: {
+                    ...entity[videoToUpdate],
+                    url: updatedVideoDownloadUrl
+                }
             });
 
-            toast.success("Video updated successfully!");
+            toast.success(`${videoToUpdate} updated successfully!`);
         } catch (error) {
             toast.error(error.message);
         }
     };
 
-    const handleVideoDelete = async () => {
+    const handleMainVideoUpdate = async () => {
         try {
-            const videoUrl = entity.videoUrl;
-            if (!videoUrl) {
-                toast.error("No video found to delete.");
+            if (!updatedMainVideo) {
+                toast.error("Please select a main video file.");
                 return;
             }
+            const storageFolderPath = `admin_socialmedia_posts/main_video.mp4`;
+            const storageRef = ref(storage, storageFolderPath);
+            await uploadBytes(storageRef, updatedMainVideo);
 
-            const storageRef = ref(storage, `admin_socialmedia_posts/updated_video.mp4`);
-            await deleteObject(storageRef);
-            const updatedImagesUrl = [...entity.imagesUrl];
+            const updatedMainVideoDownloadUrl = await getDownloadURL(storageRef);
 
             await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
-                imagesUrl: updatedImagesUrl,
-                title: entity.title,
-                videoUrl: ''
+                ...entity,
+                videoUrl: updatedMainVideoDownloadUrl
             });
 
-            toast.success("Video deleted successfully!");
+            toast.success("Main video updated successfully!");
         } catch (error) {
             toast.error(error.message);
         }
@@ -86,58 +98,9 @@ const SocialMedia = () => {
         setUpdatedVideo(file);
     };
 
-    const updateImage = async (index) => {
-        try {
-            const inputElement = document.createElement('input');
-            inputElement.type = 'file';
-            inputElement.accept = 'image/*'; // Allow only image files
-            inputElement.multiple = false; // Allow only one file
-
-            inputElement.addEventListener('change', async (event) => {
-                const file = event.target.files[0];
-
-                if (file) {
-                    const storageFolderPath = `admin_socialmedia_posts/${index}_updated_image.jpg`;
-                    const storageRef = ref(storage, storageFolderPath);
-                    await uploadBytes(storageRef, file);
-
-                    const updatedImageUrl = await getDownloadURL(storageRef);
-
-                    const updatedImagesUrl = [...entity.imagesUrl];
-                    updatedImagesUrl[index] = updatedImageUrl;
-
-                    await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
-                        imagesUrl: updatedImagesUrl,
-                        title: entity.title,
-                        videoUrl: entity.videoUrl
-                    });
-
-                    toast.success("Image updated successfully!");
-                }
-            });
-
-            // Trigger click event to open file dialog
-            inputElement.click();
-        } catch (error) {
-            toast.error(error.message);
-        }
-    };
-
-    const deleteImage = async (index) => {
-        try {
-            const updatedImagesUrl = [...entity.imagesUrl];
-            updatedImagesUrl[index] = "";
-
-            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
-                imagesUrl: updatedImagesUrl,
-                title: entity.title,
-                videoUrl: entity.videoUrl
-            });
-
-            toast.success("Image deleted successfully!");
-        } catch (error) {
-            toast.error(error.message);
-        }
+    const handleMainFileChange = (event) => {
+        const file = event.target.files[0];
+        setUpdatedMainVideo(file);
     };
 
     const handleTitleChange = (event) => {
@@ -147,9 +110,8 @@ const SocialMedia = () => {
     const handleTitleUpdate = async () => {
         try {
             await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
-                imagesUrl: entity.imagesUrl,
-                title: updatedTitle,
-                videoUrl: entity.videoUrl
+                ...entity,
+                title: updatedTitle
             });
             toast.success("Title updated successfully!");
             setEntity({ ...entity, title: updatedTitle });
@@ -157,6 +119,22 @@ const SocialMedia = () => {
             toast.error(error.message);
         }
     };
+
+    const handlePageUrlUpdate = async (videoToUpdate, updatedPageUrl) => {
+        try {
+            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
+                ...entity,
+                [videoToUpdate]: {
+                    ...entity[videoToUpdate],
+                    pageUrl: updatedPageUrl
+                }
+            });
+            toast.success(`${videoToUpdate} pageUrl updated successfully!`);
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
+
 
     return (
         <div className='w-full flex flex-col bg-[#FAFAFA] justify-center items-center'>
@@ -171,7 +149,6 @@ const SocialMedia = () => {
                         value={updatedTitle !== "" ? updatedTitle : entity.title}
                         onChange={handleTitleChange}
                         className='md:w-[75%]'
-                        label="Enter Title"
                     />
                     <button
                         className='px-3 py-3 bg-blue-600 rounded-lg text-white'
@@ -180,55 +157,100 @@ const SocialMedia = () => {
                         Update
                     </button>
                 </div>
-                <div className='w-full mb-[20px] flex flex-row justify-center gap-3 items-center flex-wrap'>
 
-                    {entity.imagesUrl && entity.imagesUrl?.map((imageUrl, index) => (
-                        <div key={index} className='relative min-h-[200px] bg-gray-300 rounded-md w-full sm:w-[50%] md:w-[33%] lg:w-[25%] max-h-[200px]'>
-                            <img className='w-full max-h-[200px] rounded-md' src={imageUrl} alt="" />
-                            <button onClick={() => updateImage(index)} className='absolute top-[20%] sm:top-[15%] md:top-[20%] bg-blue-500 right-[40%] sm:right-[35%] md:right-[40%] text-white font-semibold px-5 py-3 rounded-lg'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
-                                </svg>
-                            </button>
-                            <button onClick={() => deleteImage(index)} className='absolute top-[55%] sm:top-[70%] md:top-[55%] bg-red-500 text-white font-semibold right-[40%] sm:right-[35%] md:right-[40%] px-5 py-3 rounded-lg'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                </svg>
-                            </button>
-                        </div>
-                    ))}
-
-                </div>
-
+                {/* Render main video */}
                 {entity.videoUrl ? (
-                    <video className="w-full md:w-[75%] h-[200px]" controls>
-                        <source src={entity.videoUrl} type="video/mp4" />
-                        Your browser does not support the video tag.
-                    </video>
+                    <div className='md:w-[75%] w-full flex flex-col justify-center items-center gap-3'>
+                        <video className="w-full h-[200px]" controls>
+                            <source src={entity.videoUrl} type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
+                        <input
+                            accept="video/*"
+                            id="main-video-file-upload"
+                            type="file"
+                            onChange={handleMainFileChange}
+                        />
+                        <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={handleMainVideoUpdate}>Update Main Video</button>
+                    </div>
                 ) : (
-                    <>
-                        <p className='text-center font-bold'>No Video Uploaded.</p>
-                    </>
+                    <p className='text-center font-bold'>No Main Video Uploaded.</p>
                 )}
 
-                <div className="w-full flex flex-row justify-center gap-3 items-center">
-                    {!updatedVideo && (<input
-                        accept="video/*"
-                        id="video-file-upload"
-                        type="file"
-                        onChange={handleFileChange}
-                    />)}
-                    {updatedVideo && (
-                        <>
-                            <button className='bg-gray-400 px-2 py-2 rounded-md text-white' onClick={() => setUpdatedVideo(null)}>X</button>
-                            <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={handleVideoUpdate}>Update Video</button>
-                            <button className='bg-red-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={handleVideoDelete}>Delete Video</button>
-                        </>)}
-                </div>
+                {/* Render controls for main video */}
 
+                <div className="w-full flex flex-row justify-center gap-3 items-center">
+                    {/* Render videoOne */}
+                    {videoOne.url && (
+                        <div className='md:w-[30%] w-full flex flex-col justify-center items-center gap-3'>
+                            <video className="w-full h-[200px]" controls>
+                                <source src={videoOne.url} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
+                            <input
+                                accept="video/*"
+                                id="video-file-upload"
+                                type="file"
+                                onChange={(event) => handleFileChange(event, "videoOne")}
+                            />
+                            <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={() => handleVideoUpdate("videoOne", updatedVideo)}>Update Video One</button>
+                            <TextField
+                                className='w-full'
+                                value={updatedVideoOnePageUrl}
+                                onChange={(event) => setUpdatedVideoOnePageUrl(event.target.value)}
+                            />
+                            <button className='w-full bg-gray-400 px-2 py-2 rounded-md text-white' onClick={() => handlePageUrlUpdate("videoOne", updatedVideoOnePageUrl)}>Update PageUrl</button>
+                        </div>
+                    )}
+                    {/* Render videoTwo */}
+                    {videoTwo.url && (
+                        <div className='md:w-[30%] w-full flex flex-col justify-center items-center gap-3'>
+                            <video className="w-full h-[200px]" controls>
+                                <source src={videoTwo.url} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
+                            <input
+                                accept="video/*"
+                                id="video-file-upload"
+                                type="file"
+                                onChange={(event) => handleFileChange(event, "videoTwo")}
+                            />
+                            <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={() => handleVideoUpdate("videoTwo", updatedVideo)}>Update Video Two</button>
+                            <TextField
+                                className='w-full'
+                                value={updatedVideoTwoPageUrl}
+                                onChange={(event) => setUpdatedVideoTwoPageUrl(event.target.value)}
+                            />
+                            <button className='w-full bg-gray-400 px-2 py-2 rounded-md text-white' onClick={() => handlePageUrlUpdate("videoTwo", updatedVideoTwoPageUrl)}>Update PageUrl</button>
+                        </div>
+                    )}
+                    {/* Render videoThree */}
+                    {videoThree.url && (
+                        <div className='md:w-[30%] w-full flex flex-col justify-center items-center gap-3'>
+                            <video className="w-full h-[200px]" controls>
+                                <source src={videoThree.url} type="video/mp4" />
+                                Your browser does not support the video tag.
+                            </video>
+                            <input
+                                accept="video/*"
+                                id="video-file-upload"
+                                type="file"
+                                onChange={(event) => handleFileChange(event, "videoThree")}
+                            />
+                            <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={() => handleVideoUpdate("videoThree", updatedVideo)}>Update Video Three</button>
+                            <TextField
+                                className='w-full'
+                                value={updatedVideoThreePageUrl}
+                                onChange={(event) => setUpdatedVideoThreePageUrl(event.target.value)}
+                            />
+                            <button className='w-full bg-gray-400 px-2 py-2 rounded-md text-white' onClick={() => handlePageUrlUpdate("videoThree", updatedVideoThreePageUrl)}>Update PageUrl</button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
 export default SocialMedia;
+
