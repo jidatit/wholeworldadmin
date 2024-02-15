@@ -4,104 +4,48 @@ import { db } from '../../firebase';
 import { toast, ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import { TextField } from '@mui/material';
-import { storage } from '../../firebase';
-import { ref, uploadBytes, getDownloadURL } from '@firebase/storage';
 
 const SocialMedia = () => {
+    const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
+    const [videoRef, setVideoRef] = useState("");
     const [entity, setEntity] = useState({});
-    const [updatedMainVideo, setUpdatedMainVideo] = useState(null);
-    const [updatedVideo, setUpdatedVideo] = useState(null);
     const [updatedTitle, setUpdatedTitle] = useState("");
+    const [updatedVideoUrl, setupdatedVideoUrl] = useState("");
     const [videoOne, setVideoOne] = useState({});
     const [videoTwo, setVideoTwo] = useState({});
     const [videoThree, setVideoThree] = useState({});
     const [updatedVideoOnePageUrl, setUpdatedVideoOnePageUrl] = useState("");
     const [updatedVideoTwoPageUrl, setUpdatedVideoTwoPageUrl] = useState("");
     const [updatedVideoThreePageUrl, setUpdatedVideoThreePageUrl] = useState("");
+    const [showpopup, setshowpopup] = useState(false);
+
+
+    const getPosts = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, "admin_socialmedia_posts"));
+            let data = {};
+            querySnapshot.forEach((doc) => {
+                data = {
+                    id: doc.id,
+                    ...doc.data()
+                };
+            });
+            setEntity(data);
+            setupdatedVideoUrl(data.videoUrl)
+            setVideoOne(data.videoOne)
+            setVideoTwo(data.videoTwo)
+            setVideoThree(data.videoThree)
+            setUpdatedVideoOnePageUrl(data.videoOne.pageUrl)
+            setUpdatedVideoTwoPageUrl(data.videoTwo.pageUrl)
+            setUpdatedVideoThreePageUrl(data.videoThree.pageUrl)
+        } catch (error) {
+            toast.error(error.message);
+        }
+    };
 
     useEffect(() => {
-        const getPosts = async () => {
-            try {
-                const querySnapshot = await getDocs(collection(db, "admin_socialmedia_posts"));
-                let data = {};
-                querySnapshot.forEach((doc) => {
-                    data = {
-                        id: doc.id,
-                        ...doc.data()
-                    };
-                });
-                setEntity(data);
-                setVideoOne(data.videoOne)
-                setVideoTwo(data.videoTwo)
-                setVideoThree(data.videoThree)
-                setUpdatedVideoOnePageUrl(data.videoOne.pageUrl)
-                setUpdatedVideoTwoPageUrl(data.videoTwo.pageUrl)
-                setUpdatedVideoThreePageUrl(data.videoThree.pageUrl)
-            } catch (error) {
-                toast.error(error.message);
-            }
-        };
         getPosts();
     }, []);
-
-    const handleVideoUpdate = async (videoToUpdate, updatedVideoFile) => {
-        try {
-            if (!updatedVideoFile) {
-                toast.error("Please select a video file.");
-                return;
-            }
-            const storageFolderPath = `admin_socialmedia_posts/${videoToUpdate}.mp4`;
-            const storageRef = ref(storage, storageFolderPath);
-            await uploadBytes(storageRef, updatedVideoFile);
-
-            const updatedVideoDownloadUrl = await getDownloadURL(storageRef);
-
-            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
-                ...entity,
-                [videoToUpdate]: {
-                    ...entity[videoToUpdate],
-                    url: updatedVideoDownloadUrl
-                }
-            });
-
-            toast.success(`${videoToUpdate} updated successfully!`);
-        } catch (error) {
-            toast.error(error.message);
-        }
-    };
-
-    const handleMainVideoUpdate = async () => {
-        try {
-            if (!updatedMainVideo) {
-                toast.error("Please select a main video file.");
-                return;
-            }
-            const storageFolderPath = `admin_socialmedia_posts/main_video.mp4`;
-            const storageRef = ref(storage, storageFolderPath);
-            await uploadBytes(storageRef, updatedMainVideo);
-
-            const updatedMainVideoDownloadUrl = await getDownloadURL(storageRef);
-
-            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
-                ...entity,
-                videoUrl: updatedMainVideoDownloadUrl
-            });
-
-            toast.success("Main video updated successfully!");
-        } catch (error) {
-            toast.error(error.message);
-        }
-    };
-
-    const handleFileChange = (event) => {
-        const file = event.target.files[0];
-        setUpdatedVideo(file);
-    };
-
-    const handleMainFileChange = (event) => {
-        const file = event.target.files[0];
-        setUpdatedMainVideo(file);
-    };
 
     const handleTitleChange = (event) => {
         setUpdatedTitle(event.target.value);
@@ -130,11 +74,24 @@ const SocialMedia = () => {
                 }
             });
             toast.success(`${videoToUpdate} pageUrl updated successfully!`);
+            getPosts()
         } catch (error) {
             toast.error(error.message);
         }
     };
 
+    const handleVideoUrlUpdate = async () => {
+        try {
+            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
+                ...entity,
+                videoUrl: updatedVideoUrl
+            });
+            getPosts()
+            toast.success("Video url updated successfully!");
+        } catch (error) {
+            toast.error(error.message)
+        }
+    }
 
     return (
         <div className='w-full flex flex-col bg-[#FAFAFA] justify-center items-center'>
@@ -158,42 +115,26 @@ const SocialMedia = () => {
                     </button>
                 </div>
 
-                {/* Render main video */}
                 {entity.videoUrl ? (
                     <div className='md:w-[75%] w-full flex flex-col justify-center items-center gap-3'>
-                        <video className="w-full h-[200px]" controls>
-                            <source src={entity.videoUrl} type="video/mp4" />
-                            Your browser does not support the video tag.
-                        </video>
-                        <input
-                            accept="video/*"
-                            id="main-video-file-upload"
-                            type="file"
-                            onChange={handleMainFileChange}
-                        />
-                        <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={handleMainVideoUpdate}>Update Main Video</button>
+                        <iframe className='w-full h-[200px]' src={entity.videoUrl} frameborder="0"></iframe>
+                        <TextField onChange={(e) => setupdatedVideoUrl(e.target.value)} value={updatedVideoUrl} className='w-full' label="Video Url" />
+                        <button onClick={handleVideoUrlUpdate} className='md:w-[40%] w-full px-3 py-3 bg-blue-600 rounded-lg text-white'>Update</button>
                     </div>
                 ) : (
                     <p className='text-center font-bold'>No Main Video Uploaded.</p>
                 )}
 
-                {/* Render controls for main video */}
-
                 <div className="w-full flex flex-row justify-center gap-3 items-center">
-                    {/* Render videoOne */}
                     {videoOne.url && (
                         <div className='md:w-[30%] w-full flex flex-col justify-center items-center gap-3'>
-                            <video className="w-full h-[200px]" controls>
-                                <source src={videoOne.url} type="video/mp4" />
-                                Your browser does not support the video tag.
-                            </video>
-                            <input
-                                accept="video/*"
-                                id="video-file-upload"
-                                type="file"
-                                onChange={(event) => handleFileChange(event, "videoOne")}
-                            />
-                            <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={() => handleVideoUpdate("videoOne", updatedVideo)}>Update Video One</button>
+                            <div className='w-full h-[200px] relative'>
+                                <iframe className="w-full h-[200px]" src={videoOne.url} frameborder="0"></iframe>
+
+                                <svg onClick={() => { setshowpopup(true); setSelectedVideoUrl(videoOne.url); setVideoRef("videoOne"); }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="absolute text-white top-2 right-3 z-[12] cursor-pointer w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                </svg>
+                            </div>
                             <TextField
                                 className='w-full'
                                 value={updatedVideoOnePageUrl}
@@ -202,20 +143,14 @@ const SocialMedia = () => {
                             <button className='w-full bg-gray-400 px-2 py-2 rounded-md text-white' onClick={() => handlePageUrlUpdate("videoOne", updatedVideoOnePageUrl)}>Update PageUrl</button>
                         </div>
                     )}
-                    {/* Render videoTwo */}
                     {videoTwo.url && (
                         <div className='md:w-[30%] w-full flex flex-col justify-center items-center gap-3'>
-                            <video className="w-full h-[200px]" controls>
-                                <source src={videoTwo.url} type="video/mp4" />
-                                Your browser does not support the video tag.
-                            </video>
-                            <input
-                                accept="video/*"
-                                id="video-file-upload"
-                                type="file"
-                                onChange={(event) => handleFileChange(event, "videoTwo")}
-                            />
-                            <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={() => handleVideoUpdate("videoTwo", updatedVideo)}>Update Video Two</button>
+                            <div className='w-full h-[200px] relative'>
+                                <iframe className="w-full h-[200px]" src={videoTwo.url} frameborder="0"></iframe>
+                                <svg onClick={() => { setshowpopup(true); setSelectedVideoUrl(videoTwo.url); setVideoRef("videoTwo"); }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="absolute text-white top-2 right-3 z-[12] cursor-pointer w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                </svg>
+                            </div>
                             <TextField
                                 className='w-full'
                                 value={updatedVideoTwoPageUrl}
@@ -224,20 +159,14 @@ const SocialMedia = () => {
                             <button className='w-full bg-gray-400 px-2 py-2 rounded-md text-white' onClick={() => handlePageUrlUpdate("videoTwo", updatedVideoTwoPageUrl)}>Update PageUrl</button>
                         </div>
                     )}
-                    {/* Render videoThree */}
                     {videoThree.url && (
                         <div className='md:w-[30%] w-full flex flex-col justify-center items-center gap-3'>
-                            <video className="w-full h-[200px]" controls>
-                                <source src={videoThree.url} type="video/mp4" />
-                                Your browser does not support the video tag.
-                            </video>
-                            <input
-                                accept="video/*"
-                                id="video-file-upload"
-                                type="file"
-                                onChange={(event) => handleFileChange(event, "videoThree")}
-                            />
-                            <button className='bg-blue-600 px-2 py-2 rounded-md text-white' variant="contained" onClick={() => handleVideoUpdate("videoThree", updatedVideo)}>Update Video Three</button>
+                            <div className='w-full h-[200px] relative'>
+                                <iframe className="w-full h-[200px]" src={videoThree.url} frameborder="0"></iframe>
+                                <svg onClick={() => { setshowpopup(true); setSelectedVideoUrl(videoThree.url); setVideoRef("videoThree"); }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="absolute text-white top-2 right-3 z-[12] cursor-pointer w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                                </svg>
+                            </div>
                             <TextField
                                 className='w-full'
                                 value={updatedVideoThreePageUrl}
@@ -246,9 +175,55 @@ const SocialMedia = () => {
                             <button className='w-full bg-gray-400 px-2 py-2 rounded-md text-white' onClick={() => handlePageUrlUpdate("videoThree", updatedVideoThreePageUrl)}>Update PageUrl</button>
                         </div>
                     )}
+
                 </div>
             </div>
+            {showpopup && <Popup videoUrl={selectedVideoUrl} handleClose={() => setshowpopup(false)} entity={entity} videoRef={videoRef} />}
         </div>
+    );
+};
+
+
+const Popup = ({ videoUrl, videoRef, entity, handleClose }) => {
+    const [updatedUrl, setUpdatedUrl] = useState(videoUrl);
+
+    const handleUrlChange = (event) => {
+        setUpdatedUrl(event.target.value);
+    };
+
+    const handleUrlUpdate = async () => {
+        try {
+            await setDoc(doc(db, "admin_socialmedia_posts", entity.id), {
+                ...entity,
+                [videoRef]: {
+                    ...entity[videoRef],
+                    url: updatedUrl
+                }
+            });
+            handleClosePop()
+            toast.success(`${videoRef} url changed`)
+        } catch (error) {
+            toast.error(error.message)
+        }
+    };
+
+    const handleClosePop = () => {
+        handleClose()
+    }
+
+    return (
+        <>
+            <div className="fixed top-0 z-[300] left-0 w-screen h-screen flex items-center justify-center bg-[#1F2634] bg-opacity-75">
+                <div
+                    className="w-[40%] h-[410px] md:h-[310px] rounded-lg mt-[40px] flex flex-col gap-[23px] justify-center items-center"
+                    style={{ background: 'linear-gradient(to right, #B08725,#BCA163)' }}
+                >
+                    <TextField className='bg-white w-[90%] rounded-md' value={updatedUrl} onChange={handleUrlChange} />
+                    <button className='w-[30%] bg-green-800 px-2 py-2 rounded-md text-white' onClick={handleUrlUpdate}>Update Video URL</button>
+                    <button className='w-[30%] bg-red-800 px-2 py-2 rounded-md text-white' onClick={handleClosePop}>Close</button>
+                </div>
+            </div>
+        </>
     );
 };
 
