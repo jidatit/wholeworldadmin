@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
-import LOGO from "../assets/login/globe.png"
+import LOGO from "../assets/login/globe.png";
 import { Link, useLocation } from "react-router-dom";
 import { HiMenuAlt3, HiSpeakerphone } from "react-icons/hi";
-import { FiUsers, FiShare2, FiLogOut } from 'react-icons/fi';
-import { SiBlogger } from "react-icons/si";
+import { FiUsers, FiShare2, FiLogOut } from "react-icons/fi";
+import { SiBlogger, SiVlcmediaplayer } from "react-icons/si";
 
 const SideNav = () => {
-
   const menus = [
     { name: "Home Page", link: "/", icon: FiUsers },
     { name: "Blog", link: "/blog", icon: SiBlogger },
     { name: "Social Media Posts", link: "/social-media", icon: FiShare2 },
     { name: "Announcements", link: "/announcements", icon: HiSpeakerphone },
+    {
+      name: "News Social Media",
+      link: "/news-social-media",
+      icon: SiVlcmediaplayer,
+    },
     { name: "Logout", link: "/logout", icon: FiLogOut },
   ];
   const [open, setOpen] = useState(true);
@@ -35,8 +39,9 @@ const SideNav = () => {
   return (
     <section className="flex relative">
       <div
-        className={` bg-[#B99B55] min-h-screen shadow-md overflow-y-auto  custom-scrollbar ${open ? "w-72" : " w-14 lg:w-[75px]"
-          } duration-500 text-gray-100 px-2 lg:px-4 py-1 sm:py-2 md:py-2 lg:py-4 xl:py-3 2xl:py-3`}
+        className={` bg-[#B99B55] min-h-screen shadow-md overflow-y-auto  custom-scrollbar ${
+          open ? "w-72" : " w-14 lg:w-[75px]"
+        } duration-500 text-gray-100 px-2 lg:px-4 py-1 sm:py-2 md:py-2 lg:py-4 xl:py-3 2xl:py-3`}
       >
         <div className="py-1 flex justify-end">
           {/* {open && (
@@ -60,9 +65,15 @@ const SideNav = () => {
             <Link
               to={menu?.link}
               key={i}
-              className={`${menu?.margin && ""
-                } group flex items-center text-base  gap-3.5 font-poppins hover:bg-[#827320] hover:text-white hover:duration-100 rounded-md ${open && "p-2" // Add the p-2 class when open is true
-                } ${location.pathname === menu?.link ? "bg-[#dfb63b] text-white" : "text-white"}`}
+              className={`${
+                menu?.margin && ""
+              } group flex items-center text-base  gap-3.5 font-poppins hover:bg-[#827320] hover:text-white hover:duration-100 rounded-md ${
+                open && "p-2" // Add the p-2 class when open is true
+              } ${
+                location.pathname === menu?.link
+                  ? "bg-[#dfb63b] text-white"
+                  : "text-white"
+              }`}
             >
               <div className="p-2 lg:p-2.5 rounded-md bg-[#ce9d35] text-white">
                 {React.createElement(menu?.icon, { size: "20" })}
@@ -71,14 +82,16 @@ const SideNav = () => {
                 style={{
                   transitionDelay: `${i + 2}00ms`,
                 }}
-                className={`whitespace-pre duration-200 ${!open && "opacity-0 translate-x-28 overflow-hidden"
-                  }`}
+                className={`whitespace-pre duration-200 ${
+                  !open && "opacity-0 translate-x-28 overflow-hidden"
+                }`}
               >
                 {menu?.name}
               </h2>
               <h2
-                className={`${open && "hidden"
-                  } absolute left-48 bg-white font-poppins whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                className={`${
+                  open && "hidden"
+                } absolute left-48 bg-white font-poppins whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
               >
                 {menu?.name}
               </h2>
@@ -86,7 +99,6 @@ const SideNav = () => {
           ))}
         </div>
       </div>
-
     </section>
   );
 };
