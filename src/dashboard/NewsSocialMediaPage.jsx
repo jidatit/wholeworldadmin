@@ -6,7 +6,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { db } from "../../firebase";
 import AuthContext from "../../AuthContext";
@@ -32,10 +32,43 @@ const NewsSocialMediaPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // const handlePublish = async () => {
+  //   if (!validateFields()) {
+  //     //   console.log("Validation failed");
+
+  //     return;
+  //   }
+
+  //   // console.log("Publishing...");
+  //   if (currentUser.uid) {
+  //     try {
+  //       const docRef = await addDoc(collection(db, "news_social_posts"), {
+  //         title,
+  //         category,
+  //         platform,
+  //         embed: embedLink,
+  //         likes: [],
+  //         votes: [],
+  //         author: currentUser.uid,
+  //       });
+  //       // console.log("Document written with ID: ", docRef.id);
+  //       setTitle("");
+  //       setCategory("");
+  //       setPlatform("");
+  //       setEmbedLink("");
+  //       setErrors({});
+  //       toast.success("post published");
+  //     } catch (e) {
+  //       console.error("Error adding document: ", e);
+  //     }
+  //   } else {
+  //     toast.error("Please login to publish a post");
+  //   }
+  // };
+
   const handlePublish = async () => {
     if (!validateFields()) {
-      //   console.log("Validation failed");
-
+      // console.log("Validation failed");
       return;
     }
 
@@ -50,6 +83,7 @@ const NewsSocialMediaPage = () => {
           likes: [],
           votes: [],
           author: currentUser.uid,
+          createdAt: serverTimestamp(), // Add createdAt field
         });
         // console.log("Document written with ID: ", docRef.id);
         setTitle("");
@@ -57,7 +91,7 @@ const NewsSocialMediaPage = () => {
         setPlatform("");
         setEmbedLink("");
         setErrors({});
-        toast.success("post published");
+        toast.success("Post published");
       } catch (e) {
         console.error("Error adding document: ", e);
       }
@@ -65,7 +99,6 @@ const NewsSocialMediaPage = () => {
       toast.error("Please login to publish a post");
     }
   };
-
   return (
     <div className="w-full flex flex-col bg-[#FAFAFA] justify-center items-center">
       <div className="w-[90%] flex flex-col justify-center items-start">

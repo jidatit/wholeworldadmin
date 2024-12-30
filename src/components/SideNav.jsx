@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import LOGO from "../assets/login/globe.png";
 import { Link, useLocation } from "react-router-dom";
 import { HiMenuAlt3, HiSpeakerphone } from "react-icons/hi";
-import { FiUsers, FiShare2, FiLogOut } from "react-icons/fi";
+import { FiUsers, FiShare2, FiLogOut, FiBarChart2 } from "react-icons/fi";
 import { SiBlogger, SiVlcmediaplayer } from "react-icons/si";
 
 const SideNav = () => {
@@ -16,6 +16,7 @@ const SideNav = () => {
       link: "/news-social-media",
       icon: SiVlcmediaplayer,
     },
+    { name: "Report", link: "/report", icon: FiBarChart2 },
     { name: "Logout", link: "/logout", icon: FiLogOut },
   ];
   const [open, setOpen] = useState(true);

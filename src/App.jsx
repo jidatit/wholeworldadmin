@@ -18,6 +18,7 @@ import AuthContext from "../AuthContext";
 import { AuthContextProvider } from "../AuthContext";
 import { auth } from "../firebase";
 import NewsSocialMediaPage from "./dashboard/NewsSocialMediaPage";
+import Reports from "./dashboard/Reports";
 
 function App() {
   const { currentAdmin, adminHere } = useContext(AuthContext);
@@ -97,6 +98,14 @@ function App() {
                       element={
                         <AuthContextProvider>
                           <Announements />
+                        </AuthContextProvider>
+                      }
+                    />
+                    <Route
+                      path="/report"
+                      element={
+                        <AuthContextProvider>
+                          <Reports />
                         </AuthContextProvider>
                       }
                     />
